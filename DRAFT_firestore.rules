@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(data) {
+      return isSignedIn() && data.userId == request.auth.uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Blueprints
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['userId', 'email']) &&
+             data.keys().size() <= 6 &&
+             data.userId == request.auth.uid &&
+             data.email is string && data.email.size() <= 100;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'amount', 'type', 'date']) &&
+             data.keys().size() <= 10 &&
+             data.userId == request.auth.uid &&
+             data.amount is number && data.amount >= 0 &&
+             data.type in ['income', 'expense'] &&
+             data.date is string;
+    }
+
+    function isValidProtection(data) {
+      return data.keys().hasAll(['userId', 'policyName', 'coverageAmount']) &&
+             data.keys().size() <= 10 &&
+             data.userId == request.auth.uid &&
+             data.policyName is string && data.policyName.size() <= 200 &&
+             data.coverageAmount is number && data.coverageAmount >= 0;
+    }
+
+    function isValidSavings(data) {
+      return data.keys().hasAll(['userId', 'title', 'currentAmount']) &&
+             data.keys().size() <= 10 &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() <= 200 &&
+             data.currentAmount is number && data.currentAmount >= 0;
+    }
+
+    function isValidInvestment(data) {
+      return data.keys().hasAll(['userId', 'assetName', 'currentValue']) &&
+             data.keys().size() <= 10 &&
+             data.userId == request.auth.uid &&
+             data.assetName is string && data.assetName.size() <= 200 &&
+             data.currentValue is number && data.currentValue >= 0;
+    }
+
+    function isValidZakat(data) {
+      return data.keys().hasAll(['userId', 'year', 'amount']) &&
+             data.keys().size() <= 10 &&
+             data.userId == request.auth.uid &&
+             data.year is number && data.amount is number && data.amount >= 0;
+    }
+
+    // Match Blocks
+    match /users/{userId} {
+      allow get: if isSignedIn() && userId == request.auth.uid;
+      allow create: if isSignedIn() && userId == request.auth.uid && isValidUserProfile(incoming());
+      allow update: if isSignedIn() && userId == request.auth.uid && isValidUserProfile(incoming()) &&
+                    incoming().userId == existing().userId;
+    }
+
+    match /transactions/{transactionId} {
+      allow list: if isOwner(resource.data);
+      allow get: if isOwner(resource.data) && isValidId(transactionId);
+      allow create: if isSignedIn() && isValidId(transactionId) && isValidTransaction(incoming());
+      allow update: if isOwner(resource.data) && isValidId(transactionId) && isValidTransaction(incoming()) &&
+                    incoming().userId == existing().userId;
+      allow delete: if isOwner(resource.data) && isValidId(transactionId);
+    }
+
+    match /protection/{protectionId} {
+      allow list: if isOwner(resource.data);
+      allow get: if isOwner(resource.data) && isValidId(protectionId);
+      allow create: if isSignedIn() && isValidId(protectionId) && isValidProtection(incoming());
+      allow update: if isOwner(resource.data) && isValidId(protectionId) && isValidProtection(incoming()) &&
+                    incoming().userId == existing().userId;
+      allow delete: if isOwner(resource.data) && isValidId(protectionId);
+    }
+
+    match /savings/{savingsId} {
+      allow list: if isOwner(resource.data);
+      allow get: if isOwner(resource.data) && isValidId(savingsId);
+      allow create: if isSignedIn() && isValidId(savingsId) && isValidSavings(incoming());
+      allow update: if isOwner(resource.data) && isValidId(savingsId) && isValidSavings(incoming()) &&
+                    incoming().userId == existing().userId;
+      allow delete: if isOwner(resource.data) && isValidId(savingsId);
+    }
+
+    match /investments/{investmentId} {
+      allow list: if isOwner(resource.data);
+      allow get: if isOwner(resource.data) && isValidId(investmentId);
+      allow create: if isSignedIn() && isValidId(investmentId) && isValidInvestment(incoming());
+      allow update: if isOwner(resource.data) && isValidId(investmentId) && isValidInvestment(incoming()) &&
+                    incoming().userId == existing().userId;
+      allow delete: if isOwner(resource.data) && isValidId(investmentId);
+    }
+
+    match /zakat/{zakatId} {
+      allow list: if isOwner(resource.data);
+      allow get: if isOwner(resource.data) && isValidId(zakatId);
+      allow create: if isSignedIn() && isValidId(zakatId) && isValidZakat(incoming());
+      allow update: if isOwner(resource.data) && isValidId(zakatId) && isValidZakat(incoming()) &&
+                    incoming().userId == existing().userId;
+      allow delete: if isOwner(resource.data) && isValidId(zakatId);
+    }
+  }
+}

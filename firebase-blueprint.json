@@ -1,0 +1,238 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Basic user preferences and personal data.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "dob": { "type": "string" },
+        "address": { "type": "string" },
+        "occupation": { "type": "string" },
+        "employer": { "type": "string" },
+        "income": { "type": "number" },
+        "state": { "type": "string" },
+        "dependents": { "type": "array" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "emergencyPhone": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Income or expense record.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "category": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" }
+      },
+      "required": ["userId", "amount", "type", "date"]
+    },
+    "Protection": {
+      "title": "Protection",
+      "description": "Takaful or Insurance policy record.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "policyName": { "type": "string" },
+        "coverageAmount": { "type": "number" },
+        "premium": { "type": "number" },
+        "type": { "type": "string", "enum": ["Medical", "Life", "Critical Illness", "Accident"] },
+        "expiryDate": { "type": "string", "format": "date-time" },
+        "company": { "type": "string" },
+        "yearStarted": { "type": "string" },
+        "maturityPeriod": { "type": "string" },
+        "deathBenefit": { "type": "number" },
+        "disabilityBenefit": { "type": "number" },
+        "accident": { "type": "number" },
+        "criticalIllness": { "type": "number" },
+        "medicalCardLimitAnnual": { "type": "number" },
+        "medicalCardLimitLifetime": { "type": "number" },
+        "roomAndBoard": { "type": "number" },
+        "dailyAllowance": { "type": "number" },
+        "nominationNormalPercentage": { "type": "number" },
+        "nominationHibahPercentage": { "type": "number" },
+        "otherBenefits": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "policyName", "coverageAmount"]
+    },
+    "Savings": {
+      "title": "Savings",
+      "description": "Emergency fund or savings goal.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "targetAmount": { "type": "number" },
+        "currentAmount": { "type": "number" },
+        "type": { "type": "string", "enum": ["Emergency", "Short Term", "Education", "Other"] }
+      },
+      "required": ["userId", "title", "currentAmount"]
+    },
+    "Investment": {
+      "title": "Investment",
+      "description": "Wealth growth asset.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "assetName": { "type": "string" },
+        "currentValue": { "type": "number" },
+        "type": { "type": "string", "enum": ["ASB", "Tabung Haji", "Gold", "Stocks", "Unit Trust", "Property"] }
+      },
+      "required": ["userId", "assetName", "currentValue"]
+    },
+    "Zakat": {
+      "title": "Zakat",
+      "description": "Purification records.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "year": { "type": "number" },
+        "amount": { "type": "number" },
+        "datePaid": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["Pendapatan", "Simpanan", "Emas", "Saham", "EPF"] }
+      },
+      "required": ["userId", "year", "amount"]
+    },
+    "NetWorth": {
+      "title": "Net Worth",
+      "description": "Asset and liability tracking.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["Asset", "Liability"] },
+        "category": { "type": "string" },
+        "value": { "type": "number" }
+      },
+      "required": ["userId", "name", "type", "value"]
+    },
+    "Budget": {
+      "title": "Budget Profile",
+      "description": "Cash flow planning profile.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "lastUpdated": { "type": "string", "format": "date-time" },
+        "items": { "type": "array" }
+      },
+      "required": ["userId", "items"]
+    },
+    "RetirementSettings": {
+      "title": "Retirement Settings",
+      "description": "User preferences for retirement analysis",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "targetAge": { "type": "number" },
+        "inflationRate": { "type": "number" },
+        "postRetirementSpendingRatio": { "type": "number" },
+        "expectedRoi": { "type": "number" },
+        "assetRois": { "type": "object" },
+        "excludedAssetIds": { "type": "array" },
+        "isRenting": { "type": "boolean" },
+        "monthlyRent": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId"]
+    },
+    "ZakatSettings": {
+      "title": "Zakat Settings",
+      "description": "User settings for zakat calculation",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "excludedAssetIds": { "type": "array" },
+        "nisab": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId"]
+    },
+    "InheritanceSettings": {
+      "title": "Inheritance Settings",
+      "description": "User settings for inheritance and estate planning analysis",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "funeralCosts": {
+          "type": "object",
+          "properties": {
+            "van": { "type": "number" },
+            "grave": { "type": "number" },
+            "others": { "type": "number" },
+            "customItems": { "type": "array" }
+          }
+        },
+        "debts": {
+          "type": "object",
+          "properties": {
+            "zakat": { "type": "number" },
+            "fidyah": { "type": "number" },
+            "badalHaji": { "type": "number" },
+            "customAllahDebts": { "type": "array" }
+          }
+        },
+        "maritalPropertyPercentage": { "type": "number" },
+        "wasiatWaqaf": { "type": "object" },
+        "hibah": { "type": "object" },
+        "heirs": { "type": "object" },
+        "hibahAssetIds": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Client jagaan record for administrative viewing.",
+      "type": "object",
+      "properties": {
+         "name": { "type": "string" },
+         "email": { "type": "string" },
+         "phone": { "type": "string" },
+         "notes": { "type": "string" },
+         "status": { "type": "string", "enum": ["Pending", "Active"] },
+         "assignedUserId": { "type": "string" },
+         "createdById": { "type": "string" },
+         "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "status", "createdById", "createdAt"]
+    },
+    "UserRole": {
+      "title": "User Role",
+      "description": "Specifies user authorization level in system.",
+      "type": "object",
+      "properties": {
+         "userId": { "type": "string" },
+         "email": { "type": "string" },
+         "name": { "type": "string" },
+         "role": { "type": "string", "enum": ["admin", "pengguna"] },
+         "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "userProfiles": { "schema": "UserProfile", "description": "Users of the app." },
+    "transactions": { "schema": "Transaction", "description": "Cash flow records." },
+    "protection": { "schema": "Protection", "description": "Risk management records." },
+    "savings": { "schema": "Savings", "description": "Savings and emergency funds." },
+    "investments": { "schema": "Investment", "description": "Wealth development assets." },
+    "zakat": { "schema": "Zakat", "description": "Purification records." },
+    "networth": { "schema": "NetWorth", "description": "Asset and liability tracking." },
+    "budget": { "schema": "Budget", "description": "Cash flow planning profiles." },
+    "retirementSettings": { "schema": "RetirementSettings", "description": "Retirement analysis settings." },
+    "zakatSettings": { "schema": "ZakatSettings", "description": "Zakat calculation settings." },
+    "inheritanceSettings": { "schema": "InheritanceSettings", "description": "Inheritance and estate planning settings." },
+    "clients": { "schema": "Client", "description": "Admin managed client credentials of the app." },
+    "userRoles": { "schema": "UserRole", "description": "Admin and client roles map." }
+  }
+}

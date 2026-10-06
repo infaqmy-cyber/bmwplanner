@@ -1,0 +1,204 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(data) {
+      return isSignedIn() && data.userId == request.auth.uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\.@:\\-+]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/userRoles/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/userRoles/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Validation Blueprints
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['userId', 'name']) &&
+             data.keys().size() <= 15 &&
+             data.name is string && data.name.size() <= 200;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'amount', 'type', 'date']) &&
+             data.keys().size() <= 10 &&
+             data.amount is number && data.amount >= 0 &&
+             data.type in ['income', 'expense'] &&
+             data.date is string;
+    }
+
+    function isValidProtection(data) {
+      return data.keys().hasAll(['userId', 'policyName', 'coverageAmount']) &&
+             data.keys().size() <= 50 &&
+             data.policyName is string && data.policyName.size() <= 200 &&
+             data.coverageAmount is number && data.coverageAmount >= 0;
+    }
+
+    function isValidSavings(data) {
+      return data.keys().hasAll(['userId', 'title', 'currentAmount']) &&
+             data.keys().size() <= 10 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.currentAmount is number && data.currentAmount >= 0;
+    }
+
+    function isValidInvestment(data) {
+      return data.keys().hasAll(['userId', 'assetName', 'currentValue']) &&
+             data.keys().size() <= 10 &&
+             data.assetName is string && data.assetName.size() <= 200 &&
+             data.currentValue is number && data.currentValue >= 0;
+    }
+
+    function isValidZakat(data) {
+      return data.keys().hasAll(['userId', 'year', 'amount']) &&
+             data.keys().size() <= 10 &&
+             data.year is number && data.amount is number && data.amount >= 0;
+    }
+ 
+    function isValidNetWorth(data) {
+      return data.keys().hasAll(['userId', 'name', 'type', 'category']) &&
+             data.keys().size() <= 50;
+    }
+
+    function isValidBudget(data) {
+      return data.keys().hasAll(['userId', 'items']) &&
+             data.keys().size() <= 10 &&
+             data.items is list;
+    }
+
+    function isValidRetirementSettings(data) {
+      return data.keys().hasAll(['userId']) &&
+             data.keys().size() <= 15;
+    }
+
+    function isValidZakatSettings(data) {
+      return data.keys().hasAll(['userId']) &&
+             data.keys().size() <= 10;
+    }
+
+    function isValidInheritanceSettings(data) {
+      return data.keys().hasAll(['userId']) &&
+             data.keys().size() <= 15;
+    }
+
+    function isValidClient(data) {
+      return data.keys().hasAll(['name', 'email', 'status', 'createdById', 'createdAt']) &&
+             data.keys().size() <= 12 &&
+             data.name is string && data.name.size() <= 200 &&
+             data.email is string && data.email.size() <= 200 &&
+             data.status in ['Pending', 'Active'] &&
+             data.createdById is string;
+    }
+
+    function isValidUserRole(data) {
+      return data.keys().hasAll(['email', 'role', 'createdAt']) &&
+             data.keys().size() <= 8 &&
+             data.role in ['admin', 'pengguna'] &&
+             data.email is string;
+    }
+
+    // Match Blocks for Role Config & Pre-approvals
+    match /userRoles/{uid} {
+      allow read, write: if isAdmin();
+      allow get: if isSignedIn() && isValidId(uid) && (
+        uid == request.auth.uid || 
+        ('email' in request.auth.token && uid == 'email:' + request.auth.token.email.lower())
+      );
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(uid) && uid == request.auth.uid && isValidUserRole(incoming()) && (
+        ('email' in request.auth.token && request.auth.token.email.lower() == 'afyan.ikhlas@gmail.com' && incoming().role == 'admin') ||
+        incoming().role == 'pengguna' ||
+        ('email' in request.auth.token && 
+         incoming().role == 'admin' && 
+         exists(/databases/$(database)/documents/userRoles/$('email:' + request.auth.token.email.lower())) &&
+         get(/databases/$(database)/documents/userRoles/$('email:' + request.auth.token.email.lower())).data.role == 'admin')
+      );
+      allow delete: if isSignedIn() && isValidId(uid) && (
+        'email' in request.auth.token && uid == 'email:' + request.auth.token.email.lower()
+      );
+    }
+
+    // Match Blocks for Clients & Invitations
+    match /clients/{clientId} {
+      allow read, write: if isAdmin();
+      allow get: if isSignedIn() && isValidId(clientId) && (
+        resource.data.get('assignedUserId', '') == request.auth.uid
+      );
+      allow read: if isSignedIn() && (
+        resource.data.get('assignedUserId', '') == "" ||
+        resource.data.get('assignedUserId', '') == request.auth.uid
+      );
+      allow update: if isSignedIn() && isValidId(clientId) && (
+        existing().get('assignedUserId', '') == "" &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['assignedUserId', 'status']) &&
+        incoming().get('assignedUserId', '') == request.auth.uid &&
+        incoming().status == 'Active'
+      );
+    }
+
+    // Match Blocks for Core Services Modifiers
+    match /userProfiles/{profileId} {
+      allow read, write: if isSignedIn();
+    }
+ 
+    match /transactions/{transactionId} {
+      allow read, write: if isSignedIn();
+    }
+ 
+    match /protection/{protectionId} {
+      allow read, write: if isSignedIn();
+    }
+ 
+    match /savings/{savingsId} {
+      allow read, write: if isSignedIn();
+    }
+ 
+    match /investments/{investmentId} {
+      allow read, write: if isSignedIn();
+    }
+ 
+    match /zakat/{zakatId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /networth/{itemId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /budget/{profileId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /retirementSettings/{settingsId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /zakatSettings/{settingsId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /inheritanceSettings/{settingsId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

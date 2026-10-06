@@ -1,0 +1,6 @@
+{
+  "name": "BMW Planner (by INFAQ Consultancy)",
+  "description": "BMW Planner (by INFAQ Consultancy) - Aplikasi pengurusan kewangan peribadi berdasarkan modul pembelajaran tersusun oleh Afyan Mat Rawi, IFP.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
